@@ -1,28 +1,35 @@
-import { NextResponse } from "next/server";
-import {MongoClient} from 'mongodb';
-const uri = process.env.MONGODB_URI;
+import { NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
 
-export async function POST(req){
-    try{
-        const body = await req.json();
-        const client = await MongoClient.connect(uri);
-        const db = client.db('Contact');
-        const collection = db.collection('ContactDB');
-        //await collection.insertMany(body);
+// Load MongoDB URI from environment variables
+const uri = process.env.MONGODB_URI; 
 
-        //client.close();
+// API Route to handle POST requests
+export async function POST(request) {
+  try {
+    const body = await request.json();
 
-        const documents = Array.isArray(body) ? body : [body];
-        // if(!Array.isArray(body)){
-        //     client.close();
-        //     return NextResponse.json({message:'Expected an arry of documents'}, {status:400});
-        // }
-        await collection.insertMany(documents);
-        client.close();
-        return NextResponse.json({ message: 'Form submitted successfully' }, { status: 200 })
-    } catch(error){
-        console.error('Error inserting documents:', error);
-        return NextResponse.json({message:'Error submitting form'}, {status:500});
-
+    // Make sure body is an array (required by insertMany)
+    if (!Array.isArray(body)) {
+      return NextResponse.json({ message: 'Input must be an array of documents' }, { status: 400 });
     }
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(uri);
+    const db = client.db('Contact'); // 👈 replace with your DB name
+    const collection = db.collection('ContactDB'); // 👈 replace with your collection name
+
+    // Insert multiple documents
+    const result = await collection.insertMany(body);
+
+    // Close the client connection
+    await client.close();
+
+    // Return success response
+    return NextResponse.json({ message: 'Documents inserted successfully', insertedCount: result.insertedCount }, { status: 200 });
+
+  } catch (error) {
+    console.error('Error inserting documents:', error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
 }
