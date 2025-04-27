@@ -36,6 +36,7 @@ const CallBack = () => {
                 });
             } else {
                 alert('Error submitting form:' + data.message);
+                console.log('Error:',data.message);
             }
         } catch(error) {
             console.error('Error submitting form:',error);
